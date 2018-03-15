@@ -1009,6 +1009,58 @@ class Psi(logfileparser.Logfile):
             else:
                 assert self.moments[1] == dipole
 
+        ## Analytic Gradient (Psi4)
+         
+        #        -Total Gradient:
+        #   Atom            X                  Y                   Z
+        #  ------   -----------------  -----------------  -----------------
+        #     1       -0.000000000000     0.000000000000    -0.064527252292
+        #     2        0.000000000000    -0.028380539652     0.032263626146
+        #     3       -0.000000000000     0.028380539652     0.032263626146
+
+        if line.strip() == '-Total Gradient:':
+            self.skip_lines(inputfile, ['header', 'dash header'])
+            line = next(inputfile)
+            grads = []
+            while line.strip():
+                idx, x, y, z = line.split()
+                grads.append((float(x), float(y), float(z)))
+                line = next(inputfile)
+        
+            if not hasattr(self, 'grads'):
+                self.grads = []
+            self.grads.append(grads)
+
+        ## Finite Differences Gradient (Psi4)
+
+        # -------------------------------------------------------------
+        #   ## F-D gradient (Symmetry 0) ##
+        #   Irrep: 1 Size: 3 x 3
+        # 
+        #                  1                   2                   3
+        # 
+        #     1     0.00000000000000     0.00000000000000    -0.02921303282515
+        #     2     0.00000000000000    -0.00979709321487     0.01460651641258
+        #     3     0.00000000000000     0.00979709321487     0.01460651641258
+
+        if line.strip() == '## F-D gradient (Symmetry 0) ##':
+            next(inputfile)
+            self.skip_lines(inputfile, ['b'])
+            next(inputfile)
+            self.skip_lines(inputfile, ['b'])
+            line = next(inputfile)
+            grads = []
+
+            while line.strip():
+                idx, x, y, z = line.split()
+                grads.append((float(x), float(y), float(z)))
+                line = next(inputfile)
+        
+            if not hasattr(self, 'grads'):
+                self.grads = []
+            self.grads.append(grads)
+
+        
         ## Harmonic frequencies.
 
         # -------------------------------------------------------------
